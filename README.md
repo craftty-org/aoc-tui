@@ -35,7 +35,13 @@ This is a modular Rust rewrite of the original single-file `rust-script`:
 ```bash
 git clone https://github.com/craftty-org/aoc-tui
 cd aoc-tui
-cargo run
+cargo run --release
+```
+
+OR
+
+```bash
+cargo install --git https://github.com/craftty-org/aoc-tui
 ```
 
 ## Session cookie
