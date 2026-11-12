@@ -126,4 +126,6 @@ https://codeberg.org/Vaishnav-Sabari-Girish/dotfiles/src/branch/main/zsh/.local/
 
 This repository is a modular conversion of that script into a proper Cargo binary crate.
 
+(c) 2026, [Vaishnav-Sabari-Girish](https://vaishnavs.is-a.dev/)
+
 Released under the GPL-3.0 license (See [LICENSE](./LICENSE)).
