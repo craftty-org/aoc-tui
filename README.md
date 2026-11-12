@@ -2,6 +2,9 @@
 
 A terminal UI for [Advent of Code](https://adventofcode.com).
 
+![img](./assets/out.png)
+
+
 Browse years/days, view the puzzle text with basic HTML styling, download your personal input, edit a solution in your `$EDITOR`, run it, and submit answers — all from one TUI.
 
 This is a modular Rust rewrite of the original single-file `rust-script`:
