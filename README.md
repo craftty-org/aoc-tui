@@ -125,3 +125,5 @@ Original single-file `rust-script` implementation:
 https://codeberg.org/Vaishnav-Sabari-Girish/dotfiles/src/branch/main/zsh/.local/bin/aoc.rs
 
 This repository is a modular conversion of that script into a proper Cargo binary crate.
+
+Released under the GPL-3.0 license (See [LICENSE](./LICENSE)).
