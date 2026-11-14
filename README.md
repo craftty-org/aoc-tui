@@ -21,7 +21,7 @@ This is a modular Rust rewrite of the original single-file `rust-script`:
 - Submit part 1 / part 2 answers
 - Clipboard support for puzzle / input / output (`y`)
 - Multiple language presets (D, C, C++, Rust, Python) + custom
-- Config and session stored under `~/aoc` (or `$AOC_DIR`)
+- Config and session stored under `~/.config/aoc/`
 
 ## Requirements
 
@@ -49,7 +49,7 @@ cargo install --git https://github.com/craftty-org/aoc-tui
 Press **S** and paste your Advent of Code session cookie  
 (or export `AOC_SESSION`).
 
-It is saved to `~/aoc/.session` (or `$AOC_DIR/.session`).
+It is saved to `~/.config/aoc/.session`.
 
 ## Language
 
