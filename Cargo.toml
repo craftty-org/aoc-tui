@@ -6,7 +6,6 @@ authors = ["Vaishnav Sabari Girish <vaishnav.sabari.girish@gmail.com>"]
 license = "MIT"
 description = "A TUI for Advent of Code"
 readme = "README.md"
-homepage = "https://github.com/craftty-org/aoc-tui"
 repository = "https://github.com/craftty-org/aoc-tui"
 keywords = ["cli", "aoc", "tui"]
 categories = ["command-line-utilities", "tui"]
