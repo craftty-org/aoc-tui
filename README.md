@@ -62,9 +62,21 @@ Press **L** to choose a preset:
 | C++      | `.cpp`    | `g++ -O2 -std=c++20 -o sol_bin {file} && ./sol_bin` |
 | Rust     | `.rs`     | `rust-script {file}`                             |
 | Python   | `.py`     | `python3 {file}`                                 |
-| Others   | custom    | your own command (`{file}` = solution path)      |
 
-Choice is saved in `~/aoc/config`.
+
+Choice is saved in `~/.config/aoc/config`.
+
+You can add languages in the file as follows :
+
+```ini
+[Go]
+ext = go
+cmd = go run {file}
+
+[Odin]
+ext = odin
+cmd = odin run {file}
+```
 
 ## Keybindings
 
@@ -104,14 +116,9 @@ Choice is saved in `~/aoc/config`.
 ## Data layout
 
 ```
-~/aoc/                    # or $AOC_DIR
+~/.config/aoc                    
 ├── config                # lang / ext / cmd
-├── .session              # session cookie
-└── 2024/
-    └── day01/
-        ├── puzzle.html
-        ├── input.txt
-        └── solution.<ext>
+└── .session              # session cookie
 ```
 
 ## Solution contract

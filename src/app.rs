@@ -11,7 +11,7 @@ use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use ratatui::widgets::ListState;
 
 use crate::clipboard;
-use crate::config::{Config, PRESETS};
+use crate::config::Config;
 use crate::http::{self, extract, parse_stars};
 use crate::render;
 
@@ -40,8 +40,6 @@ fn tab_from(i: usize) -> Tab {
 pub enum Prompt {
     Session,
     Submit(u8),
-    CustomExt,
-    CustomCmd(String),
 }
 
 pub enum Mode {
@@ -152,7 +150,9 @@ impl App {
         };
         day_state.select(Some(d as usize - 1));
         let session = cfg.load_session();
-        let status = if session.is_empty() {
+        let status = if let Some(w) = &cfg.warn {
+            w.clone()
+        } else if session.is_empty() {
             "No session cookie — press S to paste yours (or export AOC_SESSION)".into()
         } else {
             "Ready".into()
@@ -391,14 +391,16 @@ impl App {
         if let Mode::Lang(i) = &mut self.mode {
             match k.code {
                 KeyCode::Up | KeyCode::Char('k') => *i = i.saturating_sub(1),
-                KeyCode::Down | KeyCode::Char('j') => *i = (*i + 1).min(PRESETS.len()),
+                KeyCode::Down | KeyCode::Char('j') => {
+                    *i = (*i + 1).min(self.cfg.langs.len().saturating_sub(1))
+                }
                 KeyCode::Esc | KeyCode::Char('q') => self.mode = Mode::Normal,
                 KeyCode::Enter => {
                     let sel = *i;
                     self.mode = Mode::Normal;
                     self.choose_lang(sel);
                 }
-                KeyCode::Char(c @ '1'..='6') => {
+                KeyCode::Char(c @ '1'..='9') => {
                     self.mode = Mode::Normal;
                     self.choose_lang(c as usize - '1' as usize);
                 }
@@ -564,33 +566,27 @@ impl App {
     }
 
     fn open_lang(&mut self) {
-        let i = PRESETS
-            .iter()
-            .position(|p| p.name == self.cfg.lang)
-            .unwrap_or(PRESETS.len());
-        self.mode = Mode::Lang(i);
+        self.cfg.reload();
+        if let Some(w) = &self.cfg.warn {
+            self.status = w.clone();
+        }
+        self.mode = Mode::Lang(self.cfg.cur);
     }
 
     fn choose_lang(&mut self, i: usize) {
-        if i < PRESETS.len() {
-            self.cfg.set_preset(i);
-            self.status = format!(
-                "Language set to {} (saved) — solutions use .{}",
-                self.cfg.lang, self.cfg.ext
-            );
-        } else {
-            self.mode = Mode::Prompt {
-                kind: Prompt::CustomExt,
-                buf: String::new(),
-            };
+        if i >= self.cfg.langs.len() {
+            return;
         }
+        self.cfg.select(i);
+        let l = self.cfg.cur();
+        self.status = format!("Language set to {} (.{}) — saved", l.name, l.ext);
     }
 
     fn start_edit(&mut self) {
         let Some(v) = &self.view else { return };
         let dir = self.cfg.day_dir(v.year, v.day);
         let _ = fs::create_dir_all(&dir);
-        let p = dir.join(format!("solution.{}", self.cfg.ext));
+        let p = dir.join(format!("solution.{}", self.cfg.cur().ext));
         if !p.exists() {
             let _ = fs::write(&p, self.cfg.template());
         }
@@ -603,14 +599,10 @@ impl App {
         }
         let Some(v) = &self.view else { return };
         let dir = self.cfg.day_dir(v.year, v.day);
-        let sol = format!("solution.{}", self.cfg.ext);
+        let sol = format!("solution.{}", self.cfg.cur().ext);
         let input = dir.join("input.txt");
         if !dir.join(&sol).exists() {
             self.status = "No solution file yet — press e to create and edit one".into();
-            return;
-        }
-        if self.cfg.cmd.is_empty() {
-            self.status = "No run command set — press L to choose a language".into();
             return;
         }
         if !input.exists() {
@@ -620,7 +612,7 @@ impl App {
         self.running = true;
         self.status = "Running…".into();
         let tx = self.tx.clone();
-        let cmd = self.cfg.cmd.replace("{file}", &sol);
+        let cmd = self.cfg.cur().cmd.replace("{file}", &sol);
         thread::spawn(move || {
             let t = Instant::now();
             let res = (|| -> Result<RunResult, String> {
@@ -674,23 +666,6 @@ impl App {
                 self.stars_req.clear();
                 self.ensure_stars();
                 self.status = "Session saved".into();
-            }
-            Prompt::CustomExt => {
-                let ext = buf.trim_start_matches('.').to_string();
-                if ext.is_empty() {
-                    return;
-                }
-                self.mode = Mode::Prompt {
-                    kind: Prompt::CustomCmd(ext),
-                    buf: String::new(),
-                };
-            }
-            Prompt::CustomCmd(ext) => {
-                if buf.is_empty() {
-                    return;
-                }
-                self.cfg.set_custom(ext, buf);
-                self.status = format!("Language set to Others (.{}) — saved", self.cfg.ext);
             }
             Prompt::Submit(level) => {
                 if buf.is_empty() {

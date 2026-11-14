@@ -7,7 +7,6 @@ use ratatui::{
 };
 
 use crate::app::{days_in, opens_text, App, Mode, Pane, Prompt, Tab};
-use crate::config::PRESETS;
 use crate::render;
 
 fn centered(area: Rect, pw: u16, ph: u16) -> Rect {
@@ -33,7 +32,7 @@ pub fn ui(f: &mut Frame, app: &mut App) {
                 Style::new().fg(Color::Green).add_modifier(Modifier::BOLD),
             ),
             Span::styled(
-                format!(" lang: {} (.{}) ", app.cfg.lang, app.cfg.ext),
+                format!(" lang: {} (.{}) ", app.cfg.cur().name, app.cfg.cur().ext),
                 Style::new().fg(Color::Magenta),
             ),
             Span::styled(
@@ -70,34 +69,35 @@ pub fn ui(f: &mut Frame, app: &mut App) {
         Mode::Normal => {}
         Mode::Lang(sel) => {
             let a = f.area();
-            let w = 78.min(a.width);
-            let h = 10.min(a.height);
+            let w = 90.min(a.width);
+            let h = (app.cfg.langs.len() as u16 + 2).min(a.height);
             let r = Rect::new(a.x + (a.width - w) / 2, a.y + (a.height - h) / 2, w, h);
-            let mut items: Vec<ListItem> = PRESETS
+            let items: Vec<ListItem> = app
+                .cfg
+                .langs
                 .iter()
                 .enumerate()
-                .map(|(i, p)| {
-                    let cur = if p.name == app.cfg.lang { " ✔" } else { "" };
-                    let def = if i == 0 { " (Default)" } else { "" };
-                    ListItem::new(format!("{}. {}{}{}   {}", i + 1, p.name, def, cur, p.cmd))
+                .map(|(i, l)| {
+                    let cur = if i == app.cfg.cur { " ✔" } else { "" };
+                    ListItem::new(format!(
+                        "{}. {}{}   .{}   {}",
+                        i + 1,
+                        l.name,
+                        cur,
+                        l.ext,
+                        l.cmd
+                    ))
                 })
                 .collect();
-            let cur = if app.cfg.lang == "Others" { " ✔" } else { "" };
-            items.push(ListItem::new(format!(
-                "{}. Others{}   (your own file extension + run command)",
-                PRESETS.len() + 1,
-                cur
-            )));
             let mut st = ListState::default();
             st.select(Some(*sel));
             f.render_widget(Clear, r);
             f.render_stateful_widget(
                 List::new(items)
-                    .block(
-                        Block::default()
-                            .borders(Borders::ALL)
-                            .title(" Language — Enter/1-6 to choose, Esc to cancel "),
-                    )
+                    .block(Block::default().borders(Borders::ALL).title(format!(
+                        " Language — Enter/1-9 choose, Esc cancel · edit {} ",
+                        app.cfg.config_file().display()
+                    )))
                     .highlight_style(Style::new().add_modifier(Modifier::REVERSED))
                     .highlight_symbol("▶ "),
                 r,
@@ -127,12 +127,6 @@ pub fn ui(f: &mut Frame, app: &mut App) {
                 Prompt::Submit(l) => {
                     format!(" Submit answer for part {l} (Enter to send, Esc to cancel) ")
                 }
-                Prompt::CustomExt => {
-                    " File extension for your language, e.g. go, zig, kt (Enter) ".to_string()
-                }
-                Prompt::CustomCmd(ext) => format!(
-                    " Command to run solution.{ext}, use {{file}} for the file, e.g. go run {{file}} (Enter) "
-                ),
             };
             let r = centered(f.area(), 80, 10);
             let r = Rect { height: 3, ..r };
@@ -262,9 +256,11 @@ fn draw_day(f: &mut Frame, app: &mut App, area: Rect) {
             .divider("│"),
         tabs_a,
     );
-    let block = Block::default()
-        .borders(Borders::ALL)
-        .title(format!(" {year} · Day {day} "));
+    let block = Block::default().borders(Borders::ALL).title(format!(
+        " {year} · Day {day} · {} (.{}) ",
+        app.cfg.cur().name,
+        app.cfg.cur().ext
+    ));
     let inner = block.inner(body_a);
     let (w, h) = (inner.width as usize, inner.height as usize);
     app.page = h;
