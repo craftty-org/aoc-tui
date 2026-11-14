@@ -131,6 +131,14 @@ Your program must:
 
 Templates for each language already do this.
 
+# Images
+
+## Main UI
+
+![out](./assets/out.png) 
+
+![lang](./assets/lang.png)
+
 ## Credits
 
 Original single-file `rust-script` implementation:
